@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Atlas Concept Map Test</title>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <style type="text/css">
+
+path.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+  stroke-opacity: 0.5;
+}
+
+marker#arrow{
+  fill: #333;
+}
+marker#red{
+  fill: red;
+}
+marker#blue{
+  fill: blue;
+}
+marker#green{
+  fill: green;
+}
+marker#yellow{
+  fill: yellow;
+}
+
+circle {
+  fill: #ccc;
+  stroke: #333;
+  stroke-width: 1.5px;
+  fill-opacity: 0.5;
+}
+
+text {
+  font: 10px sans-serif;
+  pointer-events: none;
+}
+
+text.shadow {
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-opacity: .8;
+}
+
+line {
+  stroke: #666;
+  stroke-width: 1.7px;
+  stroke-opacity: 0.5;
+}
+
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+
+
+function draw(graph){
+
+var nodes=graph["nodes"]
+var links=graph["links"]
+
+var w = 960,
+    h = 500;
+
+var force = d3.layout.force()
+    .nodes(d3.values(nodes))
+    .links(links)
+    .size([w, h])
+    .linkDistance(60)
+    .charge(-300)
+    .on("tick", tick)
+    .start();
+
+var svg = d3.select("body").append("svg:svg")
+    .attr("width", w)
+    .attr("height", h)
+	.append('svg:g');
+	
+
+svg.append('svg:rect')
+    .attr('width', w)
+    .attr('height', h)
+	.attr("pointer-events", "all")
+    .attr('fill', 'rgba(1,1,1,0)')
+	.call(d3.behavior.zoom().on("zoom", redraw));
+
+
+// Per-type markers, as they don't inherit styles.
+svg.append("svg:defs").selectAll("marker")
+    .data(["arrow", "red", "blue", "green", "yellow"])
+  .enter().append("svg:marker")
+    .attr("id", String)
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 17)
+    //.attr("refY", -1.5)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+  .append("svg:path")
+    .attr("d", "M0,-5L10,0L0,5");
+
+var link = svg.append("svg:g").selectAll("line")
+    .data(force.links())
+  .enter().append("line")
+    .attr("class","link")
+	//.attr("marker-end", "url(#arrow)")
+    .attr("marker-end", function(d) { if("color" in d){ return "url(#" + d.color + ")"; } else { return "url(#arrow)";}; })
+	.style("stroke", function(d) {return d.color;})
+	//.style("stroke-width", function(d){ if(d.color!==null){ return "2"; } else { return "1.5"; };}) 
+	.on("mouseover", function(){d3.select(this).style("stroke-opacity", 0.9);})
+	.on("mouseout", function() {d3.select(this).style("stroke-opacity",0.5);});
+
+var circle = svg.append("svg:g").selectAll("circle")
+    .data(force.nodes())
+  .enter().append("svg:circle")
+    .attr("r", 6)
+	.style("fill", function(d) {return d.color;})
+	.on("mouseover", function(){d3.select(this).style("fill-opacity", 0.9);})
+	.on("mouseout", function() {d3.select(this).style("fill-opacity",0.5);})
+    .call(force.drag);
+
+var text = svg.append("svg:g").selectAll("g")
+    .data(force.nodes())
+  .enter().append("svg:g");
+
+// A copy of the text with a thick white stroke for legibility.
+text.append("svg:text")
+    .attr("x", 8)
+    .attr("y", ".31em")
+    .attr("class", "shadow")
+    .text(function(d) { return d.title; });
+
+text.append("svg:text")
+    .attr("x", 8)
+    .attr("y", ".31em")
+    .text(function(d) { return d.title; });
+
+
+//------------------
+function redraw() {
+	console.log("here", d3.event.translate, d3.event.scale);
+	svg.attr("transform","translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+}	
+//------------------
+
+// Use elliptical arc path segments to doubly-encode directionality.
+function tick() {
+  
+  /*path.attr("d", function(d) {
+    var dx = d.target.x - d.source.x,
+        dy = d.target.y - d.source.y,
+        dr = Math.sqrt(dx * dx + dy * dy);
+    return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+  });*/
+
+  link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+		
+
+  circle.attr("transform", function(d) {
+    return "translate(" + d.x + "," + d.y + ")";
+  });
+
+  text.attr("transform", function(d) {
+    return "translate(" + d.x + "," + d.y + ")";
+  });
+}
+
+
+}
+
+draw({{graph|safe}});
+
+    </script>
+  </body>
+</html>
